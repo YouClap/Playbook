@@ -1,0 +1,40 @@
+
+include:
+  - remote: 'https://raw.githubusercontent.com/YouClap/Playbook/master/Backend/templates/gitlab-ci/master-gitlab-ci.yml'
+
+variables:
+  NAME: service-name
+  CHART_NAME: chart-name
+
+######################
+# Merge request jobs #
+######################
+
+BuildMR:
+  extends: .build_mr_template
+  script:
+    - echo 'Build stuff 🏭🔨'
+
+LintMR:
+  extends: .lint_mr_template
+  script:
+    - echo 'Lint 🔍🕵'
+
+TestMR:
+  extends: .test_mr_template
+  script:
+    - echo 'Tests ✅'
+
+
+###############
+# Master jobs #
+###############
+
+Build:
+  extends: .build_template
+  script:
+    - TODO Insert code to build and generate the web service artifact here
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - TODO insert artifact name here

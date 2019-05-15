@@ -1,0 +1,274 @@
+image: alpine:3.9.3
+
+
+variables:
+  HELM_DOCKER_TAG: "v2.14.0"
+  GSG_DOCKER_TAG: "v0.20.4"
+
+
+  OPEN_API_DOCKER_VERSION: "v4.0.1"
+  GSG_TAG_PREFIX: "releases/"
+
+
+stages:
+  - MergeRequest
+  - BuildNumber
+  - Build
+  - Lint
+  - Docker
+  - Documentation
+  - TagBuildNumber
+  - TagVersion
+  - Deploy
+
+
+##############
+# Merge jobs #
+##############
+
+.build_mr_template:
+  stage: MergeRequest
+  only:
+    - merge_requests
+  
+
+.lint_mr_template:
+  stage: MergeRequest
+  only:
+    - merge_requests
+
+
+LintHelmMR:
+  image: devth/helm
+  stage: MergeRequest
+  only:
+    - merge_requests
+  script:
+    - helm lint $CHART_NAME
+
+
+.test_mr_template:
+  stage: MergeRequest
+  only:
+    - merge_requests
+  script:
+    - echo 'Tests ✅' 
+
+
+###############
+# Master jobs #
+###############
+
+BuildNumber:
+  stage: BuildNumber
+  image: samueldebruyn/debian-git
+  only:
+    - master
+  script:
+    - git rev-list --count origin/master > .build_number
+    - echo "Build number:"$(cat .build_number)
+  artifacts:
+    paths:
+      - .build_number
+    
+
+Docker:
+  stage: Docker
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:dind
+  only:
+    - master
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH/builds:$BUILD_NUMBER .
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH/builds:$BUILD_NUMBER
+
+
+TagBuildNumber:
+  stage: TagBuildNumber
+  image: samueldebruyn/debian-git
+  only:
+    - master
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+    
+    - git tag builds/$BUILD_NUMBER
+    - git remote set-url origin https://gitlab-ci-token:$GL_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/
+    - git push origin --tags
+
+
+TagVersion:
+  stage: TagVersion
+  image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
+  when: manual
+  only:
+    - master
+  script:
+    - release changelog
+    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
+
+
+
+##################
+# Build tag jobs #
+##################
+
+DeployVersionDev: 
+  stage: BuildNumber
+  only:
+    - /builds/
+  except:
+    - branches
+  script:
+    - echo $CI_COMMIT_TAG | sed -n 's/builds\/\([0-9]\)/\1/p' > .build_number
+    - echo "Build number "$(cat .build_number)
+  artifacts:
+    paths:
+      #TODO maybe this should be a different name? 🤔
+      - .build_number 
+
+
+DeployDev:
+  extends: .deploy_template
+  variables:
+    PROJECT: $PROJECT_DEV
+  only:
+    - /builds/
+
+
+DocumentationDev:
+  extends: .documentation_template
+  only:
+    - /builds/
+  dependencies:
+    - DeployVersionDev 
+
+
+DeployDocumentationDev:
+  extends: .deploy_documentation_template
+  variables:
+    PROJECT: $PROJECT_DEV
+    DOC: "dev" #TODO find a better name
+  only:
+    - /builds/
+  dependencies:
+    - DeployVersionDev
+    - DocumentationDev
+
+
+#####################
+# Releases tag jobs #
+#####################
+
+DeployVersionProd: 
+  stage: BuildNumber
+  only:
+    - /releases/
+  except:
+    - branches
+  script:
+    - echo $CI_COMMIT_TAG | sed -n 's/releases\/\([0-9].[0-9].[0-9]\)/\1/p' > .build_number
+    - cat .build_number
+  artifacts:
+    paths:
+      - .build_number
+
+
+DeployProd:
+  extends: .deploy_template
+  only:
+    - /releases/
+  variables:
+    PROJECT: $PROJECT_PROD
+
+
+DocumentationProd:
+  extends: .documentation_template
+  only:
+    - /releases/
+  dependencies:
+    - DeployVersionProd
+
+
+DeployDocumentationProd:
+  extends: .deploy_documentation_template
+  variables:
+    PROJECT: $PROJECT_PROD
+    DOC: "prod"
+  only:
+    - /releases/
+  dependencies:
+    - DeployVersionProd
+    - DocumentationProd
+
+
+#############
+# Templates #
+#############
+
+.build_template:
+  stage: Build
+  only:
+    - master
+
+
+.deploy_template:
+  stage: Deploy
+  image: devth/helm:$HELM_DOCKER_TAG
+  except:
+    - branches
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_KUBERNETES --project $PROJECT
+    - gcloud container clusters get-credentials $CLUSTER --zone $ZONE --project $PROJECT
+
+    - helm init --client-only
+
+    #TODO check if this is correct to have CHART_NAME here
+    - helm upgrade $CHART_NAME ./$CHART_NAME 
+      --install
+      --version $BUILD_NUMBER
+      --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/builds
+      --set image.tag=$BUILD_NUMBER
+      --set image.pullSecret=gitlab-auth #TODO improve this 🔨
+
+
+.documentation_template:
+  image: openapitools/openapi-generator-cli:$OPEN_API_DOCKER_VERSION
+  stage: Documentation
+  except:
+    - branches
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - sed -i.bak 's/BUILD_NUMBER/'$build_number'/' swagger.yml # TODO maybe find a better way to do this 
+    - java -jar /opt/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar generate -g html2 -i swagger.yml -o documentation
+  artifacts:
+    paths:
+      - documentation
+
+
+.deploy_documentation_template:
+  image: google/cloud-sdk:alpine
+  stage: Deploy
+  except:
+    - branches
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_DOC_BUCKET --project=$PROJECT
+    #TODO is the bucket name correct? find a better name?
+    - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$DOC/$NAME/$BUILD_NUMBER
+    
