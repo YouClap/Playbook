@@ -1,0 +1,45 @@
+
+include:
+  - remote: 'https://raw.githubusercontent.com/YouClap/Playbook/Backend/templates/gitlab-ci/master-gitlab-ci.yml'
+
+variables:
+  NAME: service-name
+  CHART_NAME: chart-name
+
+######################
+# Merge request jobs #
+######################
+
+BuildMR:
+  extends: .build_mr_template
+  script:
+    - echo 'Build stuff 🏭🔨'
+
+LintMR:
+  extends: .lint_mr_template
+  script:
+    - echo 'Lint 🔍🕵'
+
+LintHelmMR:
+  extends: .lint_helm_mr_template
+  script:
+    - helm lint helm-chart-name-here
+
+TestMR:
+  extends: .test_mr_template
+  script:
+    - echo 'Tests ✅'
+
+
+###############
+# Master jobs #
+###############
+
+Build:
+  extends: .build_template
+  script:
+    - date > artifact
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - artifact name
