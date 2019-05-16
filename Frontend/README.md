@@ -1,5 +1,5 @@
 Frontend ✨
 ==================================
 
-![Under development](../media/work_hammer.png)
+![Under development](../assets/work_hammer.png)
 
