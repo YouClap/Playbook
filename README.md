@@ -1,9 +1,9 @@
-
-YouClap Playbook 📚
+YouClap Playbook 👏📚
 ==================================
 
 
 - [The team 👨‍👩‍👧‍👦](#1-the-team)
+- [Cookbook 👩‍🍳](/Cookbook/README.md)
 
 
 
