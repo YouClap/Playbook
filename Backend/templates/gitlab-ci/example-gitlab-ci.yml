@@ -20,11 +20,6 @@ LintMR:
   script:
     - echo 'Lint 🔍🕵'
 
-LintHelmMR:
-  extends: .lint_helm_mr_template
-  script:
-    - helm lint helm-chart-name-here
-
 TestMR:
   extends: .test_mr_template
   script:
@@ -38,8 +33,8 @@ TestMR:
 Build:
   extends: .build_template
   script:
-    - date > artifact
+    - TODO Insert code to build and generate the web service artifact here
   artifacts:
     expire_in: 1 hour
     paths:
-      - artifact name
+      - TODO insert artifact name here

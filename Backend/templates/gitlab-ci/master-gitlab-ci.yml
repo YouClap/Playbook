@@ -44,7 +44,7 @@ stages:
   only:
     - merge_requests
   script:
-    - helm lint helm-chart-name-here
+    - helm lint $CHART_NAME
 
 
 .test_mr_template:
@@ -53,7 +53,6 @@ stages:
     - merge_requests
   script:
     - echo 'Tests ✅' 
-
 
 
 ###############
