@@ -237,7 +237,6 @@ DeployDocumentationProd:
     #TODO check if this is correct to have CHART_NAME here
     - helm upgrade $CHART_NAME ./$CHART_NAME 
       --install
-      --recreate-pods
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/builds
       --set image.tag=$BUILD_NUMBER
