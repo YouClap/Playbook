@@ -249,7 +249,7 @@ DeployDocumentationProd:
   except:
     - branches
   script:
-    - BUILD_NUMBERR=`cat .build_number`
+    - BUILD_NUMBER=`cat .build_number`
     - echo "Build number $BUILD_NUMBER"
 
     - sed -i.bak 's/BUILD_NUMBER/'$build_number'/' swagger.yml # TODO maybe find a better way to do this 
