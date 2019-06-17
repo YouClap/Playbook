@@ -139,7 +139,7 @@ DeployVersionDev:
 DeployDev:
   extends: .deploy_template
   variables:
-    PROJECT: "youclap-dev"
+    PROJECT: $PROJECT_DEV
   only:
     - /builds/
 
@@ -155,7 +155,7 @@ DocumentationDev:
 DeployDocumentationDev:
   extends: .deploy_documentation_template
   variables:
-    PROJECT: "youclap-dev"
+    PROJECT: $PROJECT_DEV
     DOC: "dev" #TODO find a better name
   only:
     - /builds/
@@ -187,7 +187,7 @@ DeployProd:
   only:
     - /releases/
   variables:
-    PROJECT: "youclap-prod"
+    PROJECT: $PROJECT_PROD
 
 
 DocumentationProd:
@@ -201,7 +201,7 @@ DocumentationProd:
 DeployDocumentationProd:
   extends: .deploy_documentation_template
   variables:
-    PROJECT: "youclap-prod"
+    PROJECT: $PROJECT_PROD
     DOC: "prod"
   only:
     - /releases/
@@ -230,7 +230,7 @@ DeployDocumentationProd:
     - echo "Build number $BUILD_NUMBER"
 
     - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_KUBERNETES --project $PROJECT
-    - gcloud container clusters get-credentials gcloud-cluster-dev --zone europe-west1-d --project $PROJECT
+    - gcloud container clusters get-credentials $CLUSTER --zone $ZONE --project $PROJECT
 
     - helm init --client-only
 
@@ -270,5 +270,5 @@ DeployDocumentationProd:
 
     - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_DOC_BUCKET --project=$PROJECT
     #TODO is the bucket name correct? find a better name?
-    - gsutil cp -r documentation gs://youclap-api-doc/$DOC/$NAME/$BUILD_NUMBER
-
+    - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$DOC/$NAME/$BUILD_NUMBER
+    
