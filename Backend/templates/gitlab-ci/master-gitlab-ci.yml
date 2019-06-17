@@ -38,7 +38,7 @@ stages:
     - merge_requests
 
 
-.lint_helm_mr_template:
+LintHelmMR:
   image: devth/helm
   stage: MergeRequest
   only:
