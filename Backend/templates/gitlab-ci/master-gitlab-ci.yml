@@ -85,6 +85,16 @@ TagBuildNumber:
     - git push origin --tags
 
 
+TagVersion:
+  stage: TagVersion
+  image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
+  when: manual
+  only:
+    - master
+  script:
+    - release changelog
+    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
+
 
 ##################
 # Build tag jobs #
@@ -149,17 +159,6 @@ DeployDocumentationDev:
   dependencies:
     - DeployVersionDev
     - DocumentationDev
-
-
-TagVersion:
-  stage: TagVersion
-  image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
-  when: manual
-  only:
-    - /builds/
-  script:
-    - release changelog
-    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
 
 
 #####################
