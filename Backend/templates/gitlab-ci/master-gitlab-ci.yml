@@ -1,10 +1,8 @@
-image: alpine:3.9.3
-
 
 variables:
   HELM_DOCKER_TAG: "v2.14.0"
   GSG_DOCKER_TAG: "v0.20.4"
-
+  DEFAULT_DOCKER_TAG: "3.9.3" 
 
   OPEN_API_DOCKER_VERSION: "v4.0.1"
   GSG_TAG_PREFIX: "releases/"
@@ -38,8 +36,8 @@ stages:
 
 
 LintHelmMR:
-  image: devth/helm
   stage: MergeRequest
+  image: devth/helm
   only:
     - merge_requests
   script:
@@ -100,8 +98,9 @@ TagVersion:
 # Build tag jobs #
 ##################
 
-DeployVersionDev: 
+VersionDev: 
   stage: BuildNumber
+  image: alpine:$DEFAULT_DOCKER_TAG
   only:
     - /builds/
   except:
@@ -123,8 +122,8 @@ DeployVersionDev:
     - branches
 
 
-BuildDeployDockerDev:
-  extends: .docker_build_deploy_template
+BuildAndUploadDockerDev:
+  extends: .build_and_upload_docker_template
   only:
     - /builds/
   except:
@@ -146,7 +145,7 @@ DocumentationDev:
   only:
     - /builds/
   dependencies:
-    - DeployVersionDev 
+    - VersionDev 
 
 
 DeployDocumentationDev:
@@ -157,7 +156,7 @@ DeployDocumentationDev:
   only:
     - /builds/
   dependencies:
-    - DeployVersionDev
+    - VersionDev
     - DocumentationDev
 
 
@@ -165,8 +164,9 @@ DeployDocumentationDev:
 # Releases tag jobs #
 #####################
 
-DeployVersionProd: 
+BuildNumberProd: 
   stage: BuildNumber
+  image: alpine:$DEFAULT_DOCKER_TAG
   only:
     - /releases/
   except:
@@ -187,8 +187,8 @@ DeployVersionProd:
     - branches
 
 
-BuildDeployDockerProd:
-  extends: .docker_build_deploy_template
+BuildAndUploadDockerProd:
+  extends: .build_and_upload_docker_template
   only:
     - /releases/
   except:
@@ -210,7 +210,7 @@ DocumentationProd:
   only:
     - /releases/
   dependencies:
-    - DeployVersionProd
+    - BuildNumberProd
 
 
 DeployDocumentationProd:
@@ -221,7 +221,7 @@ DeployDocumentationProd:
   only:
     - /releases/
   dependencies:
-    - DeployVersionProd
+    - BuildNumberProd
     - DocumentationProd
 
 
@@ -257,8 +257,8 @@ DeployDocumentationProd:
 
 
 .documentation_template:
-  image: openapitools/openapi-generator-cli:$OPEN_API_DOCKER_VERSION
   stage: Build
+  image: openapitools/openapi-generator-cli:$OPEN_API_DOCKER_VERSION
   except:
     - branches
   script:
@@ -273,8 +273,8 @@ DeployDocumentationProd:
 
 
 .deploy_documentation_template:
-  image: google/cloud-sdk:alpine
   stage: Deploy
+  image: google/cloud-sdk:alpine
   except:
     - branches
   script:
@@ -286,7 +286,7 @@ DeployDocumentationProd:
     - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$DOC/$NAME/$BUILD_NUMBER
     
 
-.docker_build_deploy_template:
+.build_and_upload_docker_template:
   stage: Docker
   image: docker:stable
   variables:
