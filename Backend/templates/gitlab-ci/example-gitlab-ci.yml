@@ -1,3 +1,4 @@
+image: 👉 your docker image here 👈
 
 include:
   - remote: 'https://raw.githubusercontent.com/YouClap/Playbook/master/Backend/templates/gitlab-ci/master-gitlab-ci.yml'
