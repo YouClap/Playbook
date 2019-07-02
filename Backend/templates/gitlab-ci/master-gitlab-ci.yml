@@ -16,10 +16,9 @@ stages:
   - Build
   - Lint
   - Docker
-  - Documentation
+  - Deploy
   - TagBuildNumber
   - TagVersion
-  - Deploy
 
 
 ##############
@@ -72,25 +71,6 @@ BuildNumber:
       - .build_number
     
 
-Docker:
-  stage: Docker
-  image: docker:stable
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
-  services:
-    - docker:dind
-  only:
-    - master
-  script:
-    - BUILD_NUMBER=`cat .build_number`
-    - echo "Build number $BUILD_NUMBER"
-
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH/builds:$BUILD_NUMBER .
-    - docker push $CI_REGISTRY/$CI_PROJECT_PATH/builds:$BUILD_NUMBER
-
-
 TagBuildNumber:
   stage: TagBuildNumber
   image: samueldebruyn/debian-git
@@ -103,17 +83,6 @@ TagBuildNumber:
     - git tag builds/$BUILD_NUMBER
     - git remote set-url origin https://gitlab-ci-token:$GL_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/
     - git push origin --tags
-
-
-TagVersion:
-  stage: TagVersion
-  image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
-  when: manual
-  only:
-    - master
-  script:
-    - release changelog
-    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
 
 
 
@@ -136,8 +105,26 @@ DeployVersionDev:
       - .build_number 
 
 
-DeployDev:
-  extends: .deploy_template
+.build_dev_template:
+  extends: .build_template
+  only:
+    - /builds/
+  except:
+    - branches
+
+
+BuildDeployDockerDev:
+  extends: .docker_build_deploy_template
+  only:
+    - /builds/
+  except:
+    - branches
+  variables:
+    REGISTRY_PATH: "builds"
+
+
+DeployChartDev:
+  extends: .deploy_chart_template
   variables:
     PROJECT: $PROJECT_DEV
   only:
@@ -164,6 +151,17 @@ DeployDocumentationDev:
     - DocumentationDev
 
 
+TagVersion:
+  stage: TagVersion
+  image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
+  when: manual
+  only:
+    - /builds/
+  script:
+    - release changelog
+    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
+
+
 #####################
 # Releases tag jobs #
 #####################
@@ -182,8 +180,26 @@ DeployVersionProd:
       - .build_number
 
 
-DeployProd:
-  extends: .deploy_template
+.build_prod_template:
+  extends: .build_template
+  only:
+    - /releases/
+  except:
+    - branches
+
+
+BuildDeployDockerProd:
+  extends: .docker_build_deploy_template
+  only:
+    - /releases/
+  except:
+    - branches
+  variables:
+    REGISTRY_PATH: "releases"
+
+
+DeployChartProd:
+  extends: .deploy_chart_template
   only:
     - /releases/
   variables:
@@ -216,11 +232,9 @@ DeployDocumentationProd:
 
 .build_template:
   stage: Build
-  only:
-    - master
 
 
-.deploy_template:
+.deploy_chart_template:
   stage: Deploy
   image: devth/helm:$HELM_DOCKER_TAG
   except:
@@ -245,7 +259,7 @@ DeployDocumentationProd:
 
 .documentation_template:
   image: openapitools/openapi-generator-cli:$OPEN_API_DOCKER_VERSION
-  stage: Documentation
+  stage: Build
   except:
     - branches
   script:
@@ -272,3 +286,20 @@ DeployDocumentationProd:
     #TODO is the bucket name correct? find a better name?
     - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$DOC/$NAME/$BUILD_NUMBER
     
+
+.docker_build_deploy_template:
+  stage: Docker
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:dind
+  script:
+    - BUILD_NUMBER=`cat .build_number`
+    - echo "Build number $BUILD_NUMBER"
+
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH:$BUILD_NUMBER .
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH:$BUILD_NUMBER
+

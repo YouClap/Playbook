@@ -26,15 +26,26 @@ TestMR:
     - echo 'Tests ✅'
 
 
-###############
-# Master jobs #
-###############
+##############
+# Build jobs #
+##############
 
-Build:
-  extends: .build_template
+BuildDev:
+  extends: .build_dev_template
   script:
-    - TODO Insert code to build and generate the web service artifact here
+    - TODO Insert script to build and generate the web service artifact here
   artifacts:
-    expire_in: 1 hour
+    expire_in: 1 hour # TODO validate this
     paths:
-      - TODO insert artifact name here
+      - TODO insert artifact name here to be used in Dockerfile
+
+  
+BuildProd:
+  extends: .build_prod_template
+  script:
+    - TODO Insert script to build and generate the web service artifact here
+  artifacts:
+    expire_in: 1 hour # TODO validate this
+    paths:
+      - TODO insert artifact name here to be used in Dockerfile
+
