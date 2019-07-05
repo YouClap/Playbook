@@ -136,6 +136,7 @@ DeployChartDev:
   extends: .deploy_chart_template
   variables:
     PROJECT: $PROJECT_DEV
+    REGISTRY_PATH: "builds"
   only:
     - /builds/
 
@@ -199,10 +200,11 @@ BuildAndUploadDockerProd:
 
 DeployChartProd:
   extends: .deploy_chart_template
-  only:
-    - /releases/
   variables:
     PROJECT: $PROJECT_PROD
+    REGISTRY_PATH: "releases"
+  only:
+    - /releases/
 
 
 DocumentationProd:
@@ -251,7 +253,7 @@ DeployDocumentationProd:
     - helm upgrade $CHART_NAME ./$CHART_NAME 
       --install
       --version $BUILD_NUMBER
-      --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/builds
+      --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
       --set image.pullSecret=gitlab-auth #TODO improve this 🔨
 
