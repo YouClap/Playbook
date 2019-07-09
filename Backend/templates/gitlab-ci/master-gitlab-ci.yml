@@ -255,7 +255,6 @@ DeployDocumentationProd:
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
-      --set image.pullSecret=gitlab-auth #TODO improve this 🔨
 
 
 .documentation_template:
