@@ -47,7 +47,7 @@ LintHelmMR:
   only:
     - merge_requests
   script:
-    - helm lint ./chart/$NAME
+    - helm lint chart -f values.yaml
 
 
 .test_mr_template:
@@ -134,6 +134,8 @@ VersionDev:
   extends: .build_template
   environment:
     name: development
+  variables:
+    ENV: DEV
   only:
     - /builds/
   except:
@@ -213,6 +215,8 @@ BuildNumberProd:
   extends: .build_template
   environment:
     name: production
+  variables:
+    ENV: PROD
   only:
     - /releases/
   except:
@@ -289,8 +293,9 @@ DeployDocumentationProd:
 
     - helm init --client-only
 
-    - helm upgrade $NAME ./chart/$NAME
+    - helm upgrade $NAME chart
       --install
+      --values chart.yaml
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
