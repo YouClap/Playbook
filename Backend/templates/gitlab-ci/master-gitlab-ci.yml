@@ -149,7 +149,7 @@ BuildAndUploadDockerDev:
   except:
     - branches
   variables:
-    REGISTRY_PATH: "builds"
+    REGISTRY_PATH: builds
 
 
 DeployChartDev:
@@ -159,7 +159,7 @@ DeployChartDev:
   variables:
     PROJECT: $PROJECT_DEV
     ENVIRONMENT: DEV
-    REGISTRY_PATH: "builds"
+    REGISTRY_PATH: builds
   only:
     - /builds/
 
@@ -180,7 +180,7 @@ DeployDocumentationDev:
     name: development
   variables:
     PROJECT: $PROJECT_DEV
-    DOC: "dev" #TODO find a better name
+    DOC: dev 
   only:
     - /builds/
   dependencies:
@@ -228,7 +228,7 @@ BuildAndUploadDockerProd:
   except:
     - branches
   variables:
-    REGISTRY_PATH: "releases"
+    REGISTRY_PATH: releases
 
 
 DeployChartProd:
@@ -238,7 +238,7 @@ DeployChartProd:
   variables:
     PROJECT: $PROJECT_PROD
     ENVIRONMENT: PROD
-    REGISTRY_PATH: "releases"
+    REGISTRY_PATH: releases
   only:
     - /releases/
 
@@ -259,7 +259,7 @@ DeployDocumentationProd:
     name: production
   variables:
     PROJECT: $PROJECT_PROD
-    DOC: "prod"
+    DOC: prod
   only:
     - /releases/
   dependencies:
