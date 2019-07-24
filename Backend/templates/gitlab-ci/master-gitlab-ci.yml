@@ -25,12 +25,16 @@ stages:
 
 .build_mr_template:
   stage: MergeRequest
+  environment:
+    name: development
   only:
     - merge_requests
   
 
 .lint_mr_template:
   stage: MergeRequest
+  environment:
+    name: development
   only:
     - merge_requests
 
@@ -38,14 +42,18 @@ stages:
 LintHelmMR:
   stage: MergeRequest
   image: devth/helm
+  environment:
+    name: development
   only:
     - merge_requests
   script:
-    - helm lint $CHART_NAME
+    - helm lint chart -f values.yaml
 
 
 .test_mr_template:
   stage: MergeRequest
+  environment:
+    name: development
   only:
     - merge_requests
   script:
@@ -59,6 +67,8 @@ LintHelmMR:
 BuildNumber:
   stage: BuildNumber
   image: samueldebruyn/debian-git
+  environment:
+    name: development
   only:
     - master
   script:
@@ -72,6 +82,8 @@ BuildNumber:
 TagBuildNumber:
   stage: TagBuildNumber
   image: samueldebruyn/debian-git
+  environment:
+    name: development
   only:
     - master
   script:
@@ -86,6 +98,8 @@ TagBuildNumber:
 TagVersion:
   stage: TagVersion
   image: registry.gitlab.com/juhani/go-semrel-gitlab:$GSG_DOCKER_TAG
+  environment:
+    name: development
   when: manual
   only:
     - master
@@ -101,6 +115,8 @@ TagVersion:
 VersionDev: 
   stage: BuildNumber
   image: alpine:$DEFAULT_DOCKER_TAG
+  environment:
+    name: development
   only:
     - /builds/
   except:
@@ -116,6 +132,10 @@ VersionDev:
 
 .build_dev_template:
   extends: .build_template
+  environment:
+    name: development
+  variables:
+    ENV: DEV
   only:
     - /builds/
   except:
@@ -124,25 +144,32 @@ VersionDev:
 
 BuildAndUploadDockerDev:
   extends: .build_and_upload_docker_template
+  environment:
+    name: development
   only:
     - /builds/
   except:
     - branches
   variables:
-    REGISTRY_PATH: "builds"
+    REGISTRY_PATH: builds
 
 
 DeployChartDev:
   extends: .deploy_chart_template
+  environment:
+    name: development
   variables:
     PROJECT: $PROJECT_DEV
-    REGISTRY_PATH: "builds"
+    ENVIRONMENT: DEV
+    REGISTRY_PATH: builds
   only:
     - /builds/
 
 
 DocumentationDev:
   extends: .documentation_template
+  environment:
+    name: development
   only:
     - /builds/
   dependencies:
@@ -151,9 +178,11 @@ DocumentationDev:
 
 DeployDocumentationDev:
   extends: .deploy_documentation_template
+  environment:
+    name: development
   variables:
     PROJECT: $PROJECT_DEV
-    DOC: "dev" #TODO find a better name
+    DOC: dev 
   only:
     - /builds/
   dependencies:
@@ -168,6 +197,8 @@ DeployDocumentationDev:
 BuildNumberProd: 
   stage: BuildNumber
   image: alpine:$DEFAULT_DOCKER_TAG
+  environment:
+    name: production
   only:
     - /releases/
   except:
@@ -182,6 +213,10 @@ BuildNumberProd:
 
 .build_prod_template:
   extends: .build_template
+  environment:
+    name: production
+  variables:
+    ENV: PROD
   only:
     - /releases/
   except:
@@ -190,25 +225,32 @@ BuildNumberProd:
 
 BuildAndUploadDockerProd:
   extends: .build_and_upload_docker_template
+  environment:
+    name: production
   only:
     - /releases/
   except:
     - branches
   variables:
-    REGISTRY_PATH: "releases"
+    REGISTRY_PATH: releases
 
 
 DeployChartProd:
   extends: .deploy_chart_template
+  environment:
+    name: production
   variables:
     PROJECT: $PROJECT_PROD
-    REGISTRY_PATH: "releases"
+    ENVIRONMENT: PROD
+    REGISTRY_PATH: releases
   only:
     - /releases/
 
 
 DocumentationProd:
   extends: .documentation_template
+  environment:
+    name: production
   only:
     - /releases/
   dependencies:
@@ -217,9 +259,11 @@ DocumentationProd:
 
 DeployDocumentationProd:
   extends: .deploy_documentation_template
+  environment:
+    name: production
   variables:
     PROJECT: $PROJECT_PROD
-    DOC: "prod"
+    DOC: prod
   only:
     - /releases/
   dependencies:
@@ -249,12 +293,13 @@ DeployDocumentationProd:
 
     - helm init --client-only
 
-    #TODO check if this is correct to have CHART_NAME here
-    - helm upgrade $CHART_NAME ./$CHART_NAME 
+    - helm upgrade $NAME chart
       --install
+      --values chart.yaml
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
+      --set "image.env[0].name=ENV,image.env[0].value=$ENVIRONMENT"
 
 
 .documentation_template:
