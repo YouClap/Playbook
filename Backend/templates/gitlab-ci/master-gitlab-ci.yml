@@ -47,7 +47,7 @@ LintHelmMR:
   only:
     - merge_requests
   script:
-    - helm lint chart -f values.yaml
+    - helm lint chart -f chart.yaml
 
 
 .test_mr_template:
