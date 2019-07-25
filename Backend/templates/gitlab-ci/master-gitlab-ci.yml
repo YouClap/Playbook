@@ -182,7 +182,6 @@ DeployDocumentationDev:
     name: development
   variables:
     PROJECT: $PROJECT_DEV
-    DOC: dev 
   only:
     - /builds/
   dependencies:
@@ -263,7 +262,6 @@ DeployDocumentationProd:
     name: production
   variables:
     PROJECT: $PROJECT_PROD
-    DOC: prod
   only:
     - /releases/
   dependencies:
@@ -329,7 +327,7 @@ DeployDocumentationProd:
 
     - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_DOC_BUCKET --project=$PROJECT
     #TODO is the bucket name correct? find a better name?
-    - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$DOC/$NAME/$BUILD_NUMBER
+    - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$NAME/$BUILD_NUMBER
     
 
 .build_and_upload_docker_template:
