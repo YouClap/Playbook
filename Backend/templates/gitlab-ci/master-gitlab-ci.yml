@@ -336,8 +336,13 @@ DeployDocumentationProd:
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    # TODO update this when this is resolved https://gitlab.com/gitlab-org/gitlab-runner/issues/4566
+    # Solution from https://gitlab.com/gitlab-org/gitlab-runner/issues/4566#note_199261985
+    - name: docker:dind
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
   script:
     - BUILD_NUMBER=`cat .build_number`
     - echo "Build number $BUILD_NUMBER"
