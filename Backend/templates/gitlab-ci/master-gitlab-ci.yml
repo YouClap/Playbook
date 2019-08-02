@@ -47,7 +47,7 @@ LintHelmMR:
   only:
     - merge_requests
   script:
-    - helm lint chart -f chart.yaml
+    - helm lint chart -f chart.yml
 
 
 .test_mr_template:
@@ -293,7 +293,7 @@ DeployDocumentationProd:
 
     - helm upgrade $NAME chart
       --install
-      --values chart.yaml
+      --values chart.yml
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
