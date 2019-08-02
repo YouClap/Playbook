@@ -161,6 +161,7 @@ DeployChartDev:
   variables:
     PROJECT: $PROJECT_DEV
     ENVIRONMENT: DEV
+    PORT: 80
     REGISTRY_PATH: builds
   only:
     - /builds/
@@ -241,6 +242,7 @@ DeployChartProd:
   variables:
     PROJECT: $PROJECT_PROD
     ENVIRONMENT: PROD
+    PORT: 80
     REGISTRY_PATH: releases
   only:
     - /releases/
@@ -298,6 +300,7 @@ DeployDocumentationProd:
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
       --set "image.env[0].name=ENV,image.env[0].value=$ENVIRONMENT"
+      --set "image.env[1].name=PORT,image.env[1].value=$PORT"
 
 
 .documentation_template:
