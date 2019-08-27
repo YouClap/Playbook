@@ -25,16 +25,12 @@ stages:
 
 .build_mr_template:
   stage: MergeRequest
-  environment:
-    name: development
   only:
     - merge_requests
   
 
 .lint_mr_template:
   stage: MergeRequest
-  environment:
-    name: development
   only:
     - merge_requests
 
@@ -42,8 +38,6 @@ stages:
 LintHelmMR:
   stage: MergeRequest
   image: devth/helm
-  environment:
-    name: development
   only:
     - merge_requests
   script:
@@ -52,8 +46,6 @@ LintHelmMR:
 
 .test_mr_template:
   stage: MergeRequest
-  environment:
-    name: development
   only:
     - merge_requests
   script:
