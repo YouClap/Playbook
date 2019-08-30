@@ -2,7 +2,7 @@
 variables:
   HELM_DOCKER_TAG: "v2.14.0"
   GSG_DOCKER_TAG: "v0.20.4"
-  DEFAULT_DOCKER_TAG: "3.9.3" 
+  DEFAULT_DOCKER_TAG: "3.9.3"
 
   OPEN_API_DOCKER_VERSION: "v4.0.1"
   GSG_TAG_PREFIX: "releases/"
@@ -27,7 +27,7 @@ stages:
   stage: MergeRequest
   only:
     - merge_requests
-  
+
 
 .lint_mr_template:
   stage: MergeRequest
@@ -49,7 +49,7 @@ LintHelmMR:
   only:
     - merge_requests
   script:
-    - echo 'Tests ✅' 
+    - echo 'Tests ✅'
 
 
 ###############
@@ -69,7 +69,7 @@ BuildNumber:
   artifacts:
     paths:
       - .build_number
-    
+
 
 TagBuildNumber:
   stage: TagBuildNumber
@@ -81,7 +81,7 @@ TagBuildNumber:
   script:
     - BUILD_NUMBER=`cat .build_number`
     - echo "Build number $BUILD_NUMBER"
-    
+
     - git tag builds/$BUILD_NUMBER
     - git remote set-url origin https://gitlab-ci-token:$GL_TOKEN@gitlab.com/$CI_PROJECT_PATH.git/
     - git push origin --tags
@@ -104,7 +104,7 @@ TagVersion:
 # Build tag jobs #
 ##################
 
-VersionDev: 
+VersionDev:
   stage: BuildNumber
   image: alpine:$DEFAULT_DOCKER_TAG
   environment:
@@ -119,7 +119,7 @@ VersionDev:
   artifacts:
     paths:
       #TODO maybe this should be a different name? 🤔
-      - .build_number 
+      - .build_number
 
 
 .build_dev_template:
@@ -152,7 +152,6 @@ DeployChartDev:
     name: development
   variables:
     PROJECT: $PROJECT_DEV
-    ENVIRONMENT: DEV
     REGISTRY_PATH: builds
   only:
     - /builds/
@@ -165,7 +164,7 @@ DocumentationDev:
   only:
     - /builds/
   dependencies:
-    - VersionDev 
+    - VersionDev
 
 
 DeployDocumentationDev:
@@ -185,7 +184,7 @@ DeployDocumentationDev:
 # Releases tag jobs #
 #####################
 
-BuildNumberProd: 
+BuildNumberProd:
   stage: BuildNumber
   image: alpine:$DEFAULT_DOCKER_TAG
   environment:
@@ -232,7 +231,6 @@ DeployChartProd:
     name: production
   variables:
     PROJECT: $PROJECT_PROD
-    ENVIRONMENT: PROD
     REGISTRY_PATH: releases
   only:
     - /releases/
@@ -289,7 +287,6 @@ DeployDocumentationProd:
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
-      --set "image.env[0].name=ENV,image.env[0].value=$ENVIRONMENT"
 
 
 .documentation_template:
@@ -301,7 +298,7 @@ DeployDocumentationProd:
     - BUILD_NUMBER=`cat .build_number`
     - echo "Build number $BUILD_NUMBER"
 
-    - sed -i.bak 's/BUILD_NUMBER/'$build_number'/' swagger.yml # TODO maybe find a better way to do this 
+    - sed -i.bak 's/BUILD_NUMBER/'$build_number'/' swagger.yml # TODO maybe find a better way to do this
     - java -jar /opt/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar generate -g html2 -i swagger.yml -o documentation
   artifacts:
     paths:
@@ -320,7 +317,7 @@ DeployDocumentationProd:
     - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_DOC_BUCKET --project=$PROJECT
     #TODO is the bucket name correct? find a better name?
     - gsutil cp -r documentation gs://$BUCKET_DOCUMENTION/$NAME/$BUILD_NUMBER
-    
+
 
 .build_and_upload_docker_template:
   stage: Docker
