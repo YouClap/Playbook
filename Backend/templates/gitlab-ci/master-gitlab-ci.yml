@@ -127,7 +127,7 @@ VersionDev:
   environment:
     name: development
   variables:
-    ENV: DEV
+    ENV: dev
   only:
     - /builds/
   except:
@@ -206,7 +206,7 @@ BuildNumberProd:
   environment:
     name: production
   variables:
-    ENV: PROD
+    ENV: prod
   only:
     - /releases/
   except:
@@ -322,6 +322,7 @@ DeployDocumentationProd:
 .build_and_upload_docker_template:
   stage: Docker
   image: docker:stable
+  tag: docker
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
