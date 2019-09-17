@@ -153,6 +153,7 @@ DeployChartDev:
   variables:
     PROJECT: $PROJECT_DEV
     REGISTRY_PATH: builds
+    API_ENDPOINT: $API_ENDPOINT_DEV
   only:
     - /builds/
 
@@ -232,6 +233,7 @@ DeployChartProd:
   variables:
     PROJECT: $PROJECT_PROD
     REGISTRY_PATH: releases
+    API_ENDPOINT: $API_ENDPOINT_PROD
   only:
     - /releases/
 
@@ -287,6 +289,7 @@ DeployDocumentationProd:
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
+      --set ingress.host=$API_ENDPOINT
 
 
 .documentation_template:
