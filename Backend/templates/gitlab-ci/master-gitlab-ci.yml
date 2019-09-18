@@ -288,6 +288,7 @@ DeployDocumentationProd:
 
     - helm upgrade $NAME chart
       --install
+      --recreate-pods
       --values chart.yml
       --version $BUILD_NUMBER
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
