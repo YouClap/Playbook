@@ -154,6 +154,7 @@ DeployChartDev:
     PROJECT: $PROJECT_DEV
     REGISTRY_PATH: builds
     API_ENDPOINT: $API_ENDPOINT_DEV
+    KUBERNETES_SA: KUBERNETES_SA_DEV
   only:
     - /builds/
 
@@ -234,6 +235,7 @@ DeployChartProd:
     PROJECT: $PROJECT_PROD
     REGISTRY_PATH: releases
     API_ENDPOINT: $API_ENDPOINT_PROD
+    KUBERNETES_SA: KUBERNETES_SA_PROD
   only:
     - /releases/
 
@@ -277,8 +279,9 @@ DeployDocumentationProd:
   script:
     - BUILD_NUMBER=`cat .build_number`
     - echo "Build number $BUILD_NUMBER"
+    - KUBERNETES_SA=`eval echo "$"$KUBERNETES_SA`
 
-    - gcloud auth activate-service-account --key-file=$GCLOUD_SERVICE_ACCOUNT_WS_KUBERNETES --project $PROJECT
+    - gcloud auth activate-service-account --key-file=$KUBERNETES_SA --project $PROJECT
     - gcloud container clusters get-credentials $CLUSTER --zone $ZONE --project $PROJECT
 
     - helm init --client-only
