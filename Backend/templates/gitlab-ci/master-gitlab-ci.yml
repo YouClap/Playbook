@@ -1,7 +1,7 @@
 
 variables:
   HELM_DOCKER_TAG: "v2.14.0"
-  GSG_DOCKER_TAG: "v0.20.4"
+  GSG_DOCKER_TAG: "v0.21.0"
   DEFAULT_DOCKER_TAG: "3.9.3"
 
   OPEN_API_DOCKER_VERSION: "v4.0.1"
@@ -96,8 +96,8 @@ TagVersion:
   only:
     - master
   script:
-    - release changelog
-    - release commit-and-tag CHANGELOG.md --create-tag-pipeline
+    - release next-version
+    - release tag
 
 
 ##################
