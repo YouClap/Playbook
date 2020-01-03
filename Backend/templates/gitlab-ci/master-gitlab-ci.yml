@@ -293,6 +293,7 @@ DeployDocumentationProd:
       --set image.repository=$CI_REGISTRY/$CI_PROJECT_PATH/$REGISTRY_PATH
       --set image.tag=$BUILD_NUMBER
       --set ingress.host=$API_ENDPOINT
+      --set api.version=5
 
 
 .documentation_template:
